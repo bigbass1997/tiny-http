@@ -4,6 +4,7 @@ extern crate tiny_http;
 use divan::counter::ItemsCount;
 use divan::{bench, Bencher, Divan};
 use std::io::Write;
+use std::net;
 use std::time::Duration;
 use tiny_http::Method;
 
@@ -37,13 +38,13 @@ fn curl_bench() {
 
 #[bench]
 fn sequential_requests(bencher: Bencher) {
-    let server = tiny_http::Server::http("0.0.0.0:0").unwrap();
+    let server = tiny_http::Server::http((net::Ipv4Addr::UNSPECIFIED, 0)).unwrap();
     let port = server.server_addr().to_ip().unwrap().port();
 
-    let mut stream = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+    let mut stream = net::TcpStream::connect((net::Ipv4Addr::LOCALHOST, port)).unwrap();
 
     bencher.bench_local(|| {
-        (write!(stream, "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")).unwrap();
+        write!(stream, "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n").unwrap();
 
         let request = server.recv().unwrap();
 
@@ -59,28 +60,23 @@ fn sequential_requests(bencher: Bencher) {
 fn parallel_requests(bencher: Bencher) {
     fdlimit::raise_fd_limit();
 
-    let server = tiny_http::Server::http("0.0.0.0:0").unwrap();
+    let server = tiny_http::Server::http((net::Ipv4Addr::UNSPECIFIED, 0)).unwrap();
     let port = server.server_addr().to_ip().unwrap().port();
 
     bencher.counter(ItemsCount::new(num_requests)).bench(|| {
         let mut streams = Vec::new();
 
         for _ in 0..1000usize {
-            let mut stream = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
-            (write!(
+            let mut stream = net::TcpStream::connect((net::Ipv4Addr::LOCALHOST, port)).unwrap();
+            write!(
                 stream,
                 "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
-            ))
+            )
             .unwrap();
             streams.push(stream);
         }
 
-        loop {
-            let request = match server.try_recv().unwrap() {
-                None => break,
-                Some(rq) => rq,
-            };
-
+        while let Some(request) = server.try_recv().unwrap() {
             assert_eq!(request.method(), &Method::Get);
 
             request
