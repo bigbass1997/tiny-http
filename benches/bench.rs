@@ -56,8 +56,8 @@ fn sequential_requests(bencher: Bencher) {
     });
 }
 
-#[bench]
-fn parallel_requests(bencher: Bencher) {
+#[bench(args = [10, 100, 1000])]
+fn parallel_requests(bencher: Bencher, num_requests: u64) {
     fdlimit::raise_fd_limit();
 
     let server = tiny_http::Server::http((net::Ipv4Addr::UNSPECIFIED, 0)).unwrap();
@@ -66,7 +66,7 @@ fn parallel_requests(bencher: Bencher) {
     bencher.counter(ItemsCount::new(num_requests)).bench(|| {
         let mut streams = Vec::new();
 
-        for _ in 0..1000usize {
+        for _ in 0..num_requests {
             let mut stream = net::TcpStream::connect((net::Ipv4Addr::LOCALHOST, port)).unwrap();
             write!(
                 stream,
