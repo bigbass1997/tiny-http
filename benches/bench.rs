@@ -4,7 +4,6 @@ extern crate tiny_http;
 use divan::counter::ItemsCount;
 use divan::{bench, Bencher, Divan};
 use std::io::Write;
-use std::process::Command;
 use std::time::Duration;
 use tiny_http::Method;
 
@@ -24,7 +23,7 @@ fn curl_bench() {
     let port = server.server_addr().to_ip().unwrap().port();
     let num_requests = 10usize;
 
-    match Command::new("curl")
+    match std::process::Command::new("curl")
         .arg("-s")
         .arg(format!("http://localhost:{}/?[1-{}]", port, num_requests))
         .output()
@@ -50,7 +49,9 @@ fn sequential_requests(bencher: Bencher) {
 
         assert_eq!(request.method(), &Method::Get);
 
-        request.respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)));
+        request
+            .respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)))
+            .unwrap();
     });
 }
 
@@ -82,7 +83,9 @@ fn parallel_requests(bencher: Bencher) {
 
             assert_eq!(request.method(), &Method::Get);
 
-            request.respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)));
+            request
+                .respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)))
+                .unwrap();
         }
     });
 }
