@@ -6,7 +6,7 @@ use divan::{bench, Bencher, Divan};
 use std::io::Write;
 use std::net;
 use std::time::Duration;
-use tiny_http::Method;
+use http::Method;
 
 fn main() {
     // Run registered benchmarks
@@ -48,10 +48,10 @@ fn sequential_requests(bencher: Bencher) {
 
         let request = server.recv().unwrap();
 
-        assert_eq!(request.method(), &Method::Get);
+        assert_eq!(request.method(), &Method::GET);
 
         request
-            .respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)))
+            .respond(tiny_http::Response::new_empty(http::StatusCode::NO_CONTENT))
             .unwrap();
     });
 }
@@ -77,10 +77,10 @@ fn parallel_requests(bencher: Bencher, num_requests: u64) {
         }
 
         while let Some(request) = server.try_recv().unwrap() {
-            assert_eq!(request.method(), &Method::Get);
+            assert_eq!(request.method(), &Method::GET);
 
             request
-                .respond(tiny_http::Response::new_empty(tiny_http::StatusCode(204)))
+                .respond(tiny_http::Response::new_empty(http::StatusCode::NO_CONTENT))
                 .unwrap();
         }
     });
