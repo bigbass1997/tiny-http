@@ -96,7 +96,7 @@ impl<R: Write> Write for NotifyOnDrop<R> {
 }
 impl<R> Drop for NotifyOnDrop<R> {
     fn drop(&mut self) {
-        self.sender.send(()).unwrap();
+        let _ = self.sender.send(());
     }
 }
 
@@ -481,7 +481,7 @@ impl Drop for Request {
             let response = Response::empty(StatusCode::INTERNAL_SERVER_ERROR);
             let _ = self.respond_impl(response); // ignoring any potential error
             if let Some(sender) = self.notify_when_responded.take() {
-                sender.send(()).unwrap();
+                let _ = sender.send(());
             }
         }
     }
