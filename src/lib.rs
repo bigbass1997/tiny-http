@@ -348,17 +348,13 @@ impl Server {
                             Some(ref _ssl) => unreachable!(),
                         };
 
-                        Ok((
-                            write_closable.clone(),
-                            read_closable.clone(),
-                            ClientConnection::new(write_closable, read_closable),
-                        ))
+                        Ok(ClientConnection::new(write_closable, read_closable))
                     }
                     Err(e) => Err(e),
                 };
 
                 match new_client {
-                    Ok((mut tx, mut rx, client)) => {
+                    Ok(client) => {
                         let messages = inside_messages.clone();
                         let mut client = Some(client);
                         tasks_pool.spawn(Box::new(move || {
@@ -375,8 +371,6 @@ impl Server {
                                         messages.push(rq.into());
                                     }
                                 }
-                                rx.force_close_read();
-                                tx.force_close_write();
                             }
                         }));
                     }
