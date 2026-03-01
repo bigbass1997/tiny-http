@@ -8,8 +8,8 @@ documentation = "https://tiny-http.github.io/tiny-http/tiny_http/index.html"
 keywords = ["http", "server", "web"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/tiny-http/tiny-http"
-edition = "2018"
-rust-version = "1.80"
+edition = "2024"
+rust-version = "1.85"
 
 [features]
 default = ["log"]
